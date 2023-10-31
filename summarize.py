@@ -1,13 +1,16 @@
-from langchain.chains.mapreduce import MapReduceChain
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.chains import ReduceDocumentsChain, MapReduceDocumentsChain
-from llm_gpt import CustomLLM
+from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.llm import LLMChain
+from langchain.chains.mapreduce import MapReduceChain
 from langchain.prompts import PromptTemplate
-llm= CustomLLM(n=1)
+from langchain.text_splitter import CharacterTextSplitter
+
+from llm_gpt import CustomLLM
+
+llm = CustomLLM(n=1)
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
+
 loader = WebBaseLoader("https://fs.blog/deliberate-practice-guide/")
 docs = loader.load()
 # Map
@@ -27,9 +30,7 @@ reduce_prompt = PromptTemplate.from_template(reduce_template)
 reduce_chain = LLMChain(llm=llm, prompt=reduce_prompt)
 
 # Takes a list of documents, combines them into a single string, and passes this to an LLMChain
-combine_documents_chain = StuffDocumentsChain(
-    llm_chain=reduce_chain
-)
+combine_documents_chain = StuffDocumentsChain(llm_chain=reduce_chain)
 
 # Combines and iteravely reduces the mapped documents
 reduce_documents_chain = ReduceDocumentsChain(
