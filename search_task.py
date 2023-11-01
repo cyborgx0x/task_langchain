@@ -1,6 +1,7 @@
 from typing import Any, Coroutine, Dict, Iterator, List, Optional
 
 import markdown2
+from dotenv import load_dotenv
 from langchain.agents import AgentType, initialize_agent
 from langchain.callbacks.manager import CallbackManagerForLLMRun, Callbacks
 from langchain.chains import LLMMathChain
@@ -17,6 +18,8 @@ from google_search import Google_Dorking
 from llama_wrapper import LLAMAAPI
 from llm_gpt import CustomLLM
 from retriever import retriever
+
+load_dotenv()
 
 
 class CustomChatOPENAI(ChatOpenAI):
@@ -42,12 +45,10 @@ class CustomChatOPENAI(ChatOpenAI):
         )
 
 
-llm = CustomChatOPENAI(
-    temperature=0, openai_api_key="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"
-)
 llm = CustomLLM(n=1)
+# from local_model import llm
+
 # llm = LLAMAAPI(n=1)
-# Load the tool configs that are needed.
 search = SerpAPIWrapper(
     serpapi_api_key="03feffb940b52a345fcc39ec463e24d2c11af3fcf2fc87d560df4c6162ed7994"
 )
@@ -57,9 +58,6 @@ from langchain.tools import tool
 
 
 class URLRetriever(BaseTool):
-    name = "Retrieve From URL"
-    description = "useful for when you need to access to a link, input a raw text url"
-
     def _run(self, url: str) -> str:
         print(url)
         try:
@@ -74,9 +72,6 @@ class URLRetriever(BaseTool):
 
 
 class GoogleSearch(BaseTool):
-    name = "Google Search"
-    description = "useful for when you need to search for information"
-
     def _run(self, keyword: str) -> str:
         return Google_Dorking(keyword=keyword)
 
@@ -84,7 +79,7 @@ class GoogleSearch(BaseTool):
 retriever_tool = URLRetriever(
     name="Retrieve From URL",
     func=URLRetriever,
-    description="useful when you need to access internet",
+    description="useful for when you need to retrieve content from a real URL, input is a URL",
 )
 
 google_search_tool = GoogleSearch(
@@ -93,9 +88,10 @@ google_search_tool = GoogleSearch(
     description="useful for when you need to search for information",
 )
 
-tools = [retriever_tool, google_search_tool]
 
+tools = [google_search_tool, retriever_tool]
 
+llm = ChatOpenAI(openai_api_base="http://localhost:8000/v1", max_tokens=4048)
 agent = initialize_agent(
     tools,
     llm,
@@ -104,7 +100,7 @@ agent = initialize_agent(
     handle_parsing_errors=True,
 )
 
-agent.run(f"Hoang Kim Phu FPT")
+# agent.run(f"Israel Palestine conflict")
 
 
 # agent_executor = initialize_agent(

@@ -13,7 +13,6 @@ import requests
 # )
 # retriever = vectorstore.as_retriever()
 def retriever(*x, **y):
-    requests.get('')
     return 'harrison worked at kensho'
 
 template = """Answer the question based only on the following context:
@@ -24,7 +23,8 @@ Question: {question}
 prompt = ChatPromptTemplate.from_template(template)
 
 model = CustomLLM(n=1)
-
+from local_model import llm
+model = llm
 chain = (
     {"context": retriever, "question": RunnablePassthrough()}
     | prompt

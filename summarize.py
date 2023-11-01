@@ -1,31 +1,41 @@
+from dotenv import load_dotenv
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain.chains.llm import LLMChain
 from langchain.chains.mapreduce import MapReduceChain
+from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
 
+load_dotenv()
 from llm_gpt import CustomLLM
 
 llm = CustomLLM(n=1)
+llm = ChatOpenAI(openai_api_base="http://localhost:8000/v1", max_tokens=4048, temperature=0)
+
 from langchain.chains.combine_documents.stuff import StuffDocumentsChain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import WebBaseLoader
 
+# from local_model import llm
+
 loader = WebBaseLoader("https://fs.blog/deliberate-practice-guide/")
 docs = loader.load()
 # Map
-map_template = """Sau đây là bộ tài liệu
+map_template = """The following is a set of documents
 {docs}
-Dựa vào danh sách tài liệu này, vui lòng xác định các chủ đề chính
-Câu trả lời hữu ích:"""
+Based on this list of docs, please identify the main themes 
+Helpful Answer:"""
 map_prompt = PromptTemplate.from_template(map_template)
 map_chain = LLMChain(llm=llm, prompt=map_prompt)
 
-reduce_template = """Sau đây là tập hợp các bản tóm tắt::
+reduce_template = """The following is set of summaries:
 {doc_summaries}
-Hãy lấy những điều này và chắt lọc nó thành một bản tóm tắt tổng hợp cuối cùng về các chủ đề chính.
-Câu trả lời hữu ích:"""
+Take these and distill it into a final, consolidated summary of the main themes. 
+Helpful Answer:"""
 reduce_prompt = PromptTemplate.from_template(reduce_template)
+from langchain import hub
+reduce_prompt = hub.pull("rlm/map-prompt")
+
 
 reduce_chain = LLMChain(llm=llm, prompt=reduce_prompt)
 
@@ -38,7 +48,8 @@ reduce_documents_chain = ReduceDocumentsChain(
     combine_documents_chain=combine_documents_chain,
     # If documents exceed context for `StuffDocumentsChain`
     collapse_documents_chain=combine_documents_chain,
-    # The maximum number of tokens to group documents into.
+    # The maximum number of tokens
+    # to group documents into.
     token_max=4000,
 )
 
@@ -58,4 +69,4 @@ text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
 )
 split_docs = text_splitter.split_documents(docs)
 
-print(map_reduce_chain.run(split_docs))
+map_reduce_chain.run(split_docs)
