@@ -45,14 +45,13 @@ class CustomChatOPENAI(ChatOpenAI):
         )
 
 
-llm = CustomLLM(n=1)
 # from local_model import llm
 
 # llm = LLAMAAPI(n=1)
 search = SerpAPIWrapper(
     serpapi_api_key="03feffb940b52a345fcc39ec463e24d2c11af3fcf2fc87d560df4c6162ed7994"
 )
-llm_math_chain = LLMMathChain(llm=llm, verbose=True)
+
 
 from langchain.tools import tool
 
@@ -77,21 +76,25 @@ class GoogleSearch(BaseTool):
 
 
 retriever_tool = URLRetriever(
-    name="Retrieve From URL",
+    name="Summarize From URL",
     func=URLRetriever,
-    description="useful for when you need to retrieve content from a real URL, input is a URL",
+    description="useful for when you need to summarize content from a real URL, input is a URL from Google Search Tool, only url",
 )
 
 google_search_tool = GoogleSearch(
     name="Google Search",
     func=GoogleSearch,
-    description="useful for when you need to search for information",
+    description="useful for when you need to search for a list of url to summarize",
 )
 
+tools = [
+    google_search_tool,
+    retriever_tool,
+]
 
-tools = [google_search_tool, retriever_tool]
+# llm = ChatOpenAI(openai_api_base="http://localhost:8000/v1", max_tokens=4048)
+llm = CustomLLM(n=1)
 
-llm = ChatOpenAI(openai_api_base="http://localhost:8000/v1", max_tokens=4048)
 agent = initialize_agent(
     tools,
     llm,
@@ -99,8 +102,44 @@ agent = initialize_agent(
     verbose=True,
     handle_parsing_errors=True,
 )
+from summarize_agent import create_pirate_agent
 
-# agent.run(f"Israel Palestine conflict")
+agent = create_pirate_agent(
+    tools=tools,
+    llm=llm,
+)
+
+
+template_helper = """Trong vai trò là một người điều tra tội phạm, bạn hãy tìm hiểu thông tin thông qua câu hỏi sau. Sâu đây là các công cụ bạn được quyền sử dụng:
+Bạn không được kết luận quá sớm, bạn cần có ít nhất 5 observation để có thể đưa ra câu trả lời cuối cùng bằng tiếng Việt
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times, and must be repeat more than five times to have full comprehensive and detail answer to the problem)
+Thought: I now know the final answer
+Final Answer: Câu trả lời Tổng hợp từ các observation bằng một danh sách
+
+Hãy nhớ rằng, câu trả lời cuối cùng nên tổng hợp đầy đủ thông tin từ toàn bộ các hành động và suy nghĩ trước. Cung cấp một báo cáo đầy đủ và chi tiết
+
+Question: {input}
+{agent_scratchpad}"""
+
+
+helper_agent = create_pirate_agent(
+    tools=tools,
+    llm=llm,
+    template=template_helper
+)
+
+agent.run(
+    f"LISA Black Pink"
+)
 
 
 # agent_executor = initialize_agent(

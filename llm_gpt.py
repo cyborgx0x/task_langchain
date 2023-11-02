@@ -22,7 +22,7 @@ class CustomLLM(LLM):
     ) -> str:
         payload = json.dumps({"text": prompt, "stop": stop})
         headers = {"Content-Type": "application/json", "X-API-Key": ""}
-        url = "http://127.0.0.1:8000/langchain"
+        url = "http://127.0.0.1:8080/langchain"
         response = requests.request("POST", url, headers=headers, data=payload)
         if stop:
             return response.json().split(stop[0])[0]
@@ -33,5 +33,3 @@ class CustomLLM(LLM):
     def _identifying_params(self) -> Mapping[str, Any]:
         """Get the identifying parameters."""
         return {"n": self.n}
-
-
