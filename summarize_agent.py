@@ -15,8 +15,7 @@ from langchain.tools import BaseTool, StructuredTool, Tool, tool
 from langchain.utilities import SerpAPIWrapper
 
 # Set up the base template
-template = """Trong vai trò là một người điều tra tội phạm, bạn hãy tìm hiểu thông tin thông qua câu hỏi sau. Sâu đây là các công cụ bạn được quyền sử dụng:
-Bạn không được kết luận quá sớm, bạn cần có ít nhất 5 observation để có thể đưa ra câu trả lời cuối cùng bằng tiếng Việt
+template = """Trong vai trò là một nghiên cứu sinh, bạn hãy tìm hiểu thông tin. Sau đây là các công cụ bạn được quyền sử dụng:
 {tools}
 
 Use the following format:
@@ -28,7 +27,7 @@ Action Input: the input to the action
 Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times, and must be repeat more than five times to have full comprehensive and detail answer to the problem)
 Thought: I now know the final answer
-Final Answer: Câu trả lời Tổng hợp từ các observation bằng một danh sách, cần có ít nhất 2 observation, luôn viết bằng Tiêng Việt
+Final Answer: Nghiên cứu từ các observation, bài viết dịch sang tiếng Việt, trả lời cho câu hỏi
 
 
 Question: {input}
@@ -64,10 +63,14 @@ class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         # Check if agent should finish
         if "Final Answer:" in llm_output:
+            try: 
+                output = llm_output.split("Final Answer:")[-1].strip().split("Final Answer:")[-1].strip()
+            except:
+                output = llm_output.split("Final Answer:")[-1].strip()
             return AgentFinish(
                 # Return values is generally always a dictionary with a single `output` key
                 # It is not recommended to try anything else at the moment :)
-                return_values={"output": llm_output.split("Final Answer:")[-1].strip()},
+                return_values={"output": output},
                 log=llm_output,
             )
         # Parse out the action and action input
@@ -100,8 +103,9 @@ def create_pirate_agent(tools, llm, template=template):
         output_parser=output_parser,
         stop=["\nObservation:"],
         allowed_tools=tool_names,
+
     )
-    agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True)
+    agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=tools, verbose=True,handle_parsing_errors=True)
     return agent_executor
 
 

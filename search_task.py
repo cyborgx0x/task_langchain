@@ -14,7 +14,7 @@ from langchain.utilities import SerpAPIWrapper
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
 
-from google_search import Google_Dorking
+from google_search import Google_Dorking, get_url_list
 from llama_wrapper import LLAMAAPI
 from llm_gpt import CustomLLM
 from retriever import retriever
@@ -59,19 +59,20 @@ from langchain.tools import tool
 class URLRetriever(BaseTool):
     def _run(self, url: str) -> str:
         print(url)
-        try:
-            html = markdown2.markdown(url)
-            raw_url = html.split('"')[1]
-        except:
-            raw_url = None
-        if raw_url:
-            return retriever(url=raw_url)
+        # try:
+        #     html = markdown2.markdown(url)
+        #     raw_url = html.split('"')[1]
+        # except:
+        #     raw_url = None
+        # if raw_url:
+        #     return retriever(url=raw_url)
 
         return retriever(url=url)
 
 
 class GoogleSearch(BaseTool):
     def _run(self, keyword: str) -> str:
+        # return get_url_list(keyword=keyword)
         return Google_Dorking(keyword=keyword)
 
 
@@ -92,8 +93,8 @@ tools = [
     retriever_tool,
 ]
 
-# llm = ChatOpenAI(openai_api_base="http://localhost:8000/v1", max_tokens=4048)
 llm = CustomLLM(n=1)
+llm = ChatOpenAI(temperature=0, model='gpt-4', max_tokens=8192, verbose=True, openai_api_key='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')
 
 agent = initialize_agent(
     tools,
@@ -102,8 +103,8 @@ agent = initialize_agent(
     verbose=True,
     handle_parsing_errors=True,
 )
+# llm = ChatOpenAI(temperature=0)
 from summarize_agent import create_pirate_agent
-
 agent = create_pirate_agent(
     tools=tools,
     llm=llm,
@@ -138,7 +139,7 @@ helper_agent = create_pirate_agent(
 )
 
 agent.run(
-    f"LISA Black Pink"
+    f"Cong Ty Co Phan He Thong Cong Nghe ETC"
 )
 
 

@@ -22,3 +22,11 @@ extract a list of link from following data for me, return in format of: url: tit
     url = "http://127.0.0.1:8080/langchain_markdown"
     response = requests.request("POST", url, headers=headers, data=payload)
     return response.json()
+
+def get_url_list(keyword):
+    url = f'https://www.google.com/search?q={keyword}'
+    payload = json.dumps({"text": url})
+    headers = {"Content-Type": "application/json", "X-API-Key": ""}
+    url = "http://localhost:8080/crawl_markdown"
+    response = requests.request("POST", url, headers=headers, data=payload)
+    return response.json()
